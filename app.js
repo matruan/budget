@@ -138,7 +138,41 @@ var uiController = (function () {
 		budgetExpensesValue: '.budget__expenses--value',
 		budgetExpensesPercentage: '.budget__expenses--percentage',
 		expensesPercLabel: '.item__percentage'
-	}
+	};
+
+	var formatNumbers = function(num, type){
+		var numSplit, int, dec;
+		var intWithPointsAux = "";
+		var intWithPoints = "";
+		var count = 0;
+
+		num = Math.abs(num);
+		num = num.toFixed(2);
+		numSplit = num.split('.');
+
+		int = numSplit[0];
+		dec = numSplit[1];
+		
+		if (int.length > 3) {
+			 for (var i = int.length-1; i >= 0; i--){
+				if (count === 3){
+					intWithPointsAux+=".";
+					count = 0;
+				}
+				intWithPointsAux+=int[i];
+				count++;
+			}
+			
+			for (var i = intWithPointsAux.length-1; i>=0; i--){
+				intWithPoints+=intWithPointsAux[i];
+			}
+
+		} else {
+			intWithPoints = int;
+		}
+					
+		return (type === "income" ? "+" : "-") + intWithPoints + "'" + dec;
+	};
 
 	return {
 		getInput: function () {
@@ -153,18 +187,25 @@ var uiController = (function () {
 			document.querySelector(domStrings.budgetValue).textContent = budget.budget;
 			document.querySelector(domStrings.budgetIncomeValue).textContent = budget.totalIncome;
 			document.querySelector(domStrings.budgetExpensesValue).textContent = budget.totalExpense;
-			document.querySelector(domStrings.budgetExpensesPercentage).textContent = budget.percentage;
+			
+			if (budget.percentage !== -1) {
+				document.querySelector(domStrings.budgetExpensesPercentage).textContent = budget.percentage + '%';
+			} else {
+				document.querySelector(domStrings.budgetExpensesPercentage).textContent = '--';
+			}
 		},
 
 		displayPercentages: function(percentages) {
 			var fields = document.querySelectorAll(domStrings.expensesPercLabel);
 
+			// How to write a function that accepts a function as a parameter
 			var nodeListForEach = function(list, callback){
 				for (var i = 0; i < list.length; i++) {
 					callback(list[i], i);
 				}
 			};
 
+			// Now we call the function with an anonymous function
 			nodeListForEach(fields, function(current, index) {
 				if (percentages[index] !== -1) {
 					current.textContent = percentages[index] + "%";
@@ -175,6 +216,7 @@ var uiController = (function () {
 
 		},
 
+		
 		addListItem: function (obj, type) {
 			var html, newHtml, element;
 			if (type === 'income') {
@@ -187,7 +229,7 @@ var uiController = (function () {
 
 			newHtml = html.replace("%id%", obj.id);
 			newHtml = newHtml.replace("%description%", obj.description);
-			newHtml = newHtml.replace("%value%", obj.value);
+			newHtml = newHtml.replace("%value%", formatNumbers(obj.value, type));
 
 			document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
 
@@ -290,6 +332,8 @@ var controller = (function (budgetCtrl, uiCtrol) {
 		if (itemId) {
 			splitId = itemId.split('-');
 			type = splitId[0];
+
+			// Type coercion:
 			id = +splitId[1];
 			
 			// 1. Delete the item from the data structure
