@@ -137,7 +137,8 @@ var uiController = (function () {
 		budgetIncomePercentage: '.budget__income--percentage',
 		budgetExpensesValue: '.budget__expenses--value',
 		budgetExpensesPercentage: '.budget__expenses--percentage',
-		expensesPercLabel: '.item__percentage'
+		expensesPercLabel: '.item__percentage',
+		dateLabel: '.budget__title--month'
 	};
 
 	var formatNumbers = function(num, type){
@@ -174,6 +175,13 @@ var uiController = (function () {
 		return (type === "income" ? "+" : "-") + intWithPoints + "'" + dec;
 	};
 
+	// How to write a function that accepts a function as a parameter
+	var nodeListForEach = function(list, callback){
+		for (var i = 0; i < list.length; i++) {
+			callback(list[i], i);
+		}
+	};
+
 	return {
 		getInput: function () {
 			return {
@@ -184,9 +192,9 @@ var uiController = (function () {
 		},
 
 		displayBudget: function(budget) {
-			document.querySelector(domStrings.budgetValue).textContent = budget.budget;
-			document.querySelector(domStrings.budgetIncomeValue).textContent = budget.totalIncome;
-			document.querySelector(domStrings.budgetExpensesValue).textContent = budget.totalExpense;
+			budget.budget > 0 ? document.querySelector(domStrings.budgetValue).textContent = formatNumbers(budget.budget, 'income') : document.querySelector(domStrings.budgetValue).textContent = formatNumbers(budget.budget, 'expenses');
+			document.querySelector(domStrings.budgetIncomeValue).textContent = formatNumbers(budget.totalIncome, 'income');
+			document.querySelector(domStrings.budgetExpensesValue).textContent = formatNumbers(budget.totalExpense, 'expenses');
 			
 			if (budget.percentage !== -1) {
 				document.querySelector(domStrings.budgetExpensesPercentage).textContent = budget.percentage + '%';
@@ -198,13 +206,6 @@ var uiController = (function () {
 		displayPercentages: function(percentages) {
 			var fields = document.querySelectorAll(domStrings.expensesPercLabel);
 
-			// How to write a function that accepts a function as a parameter
-			var nodeListForEach = function(list, callback){
-				for (var i = 0; i < list.length; i++) {
-					callback(list[i], i);
-				}
-			};
-
 			// Now we call the function with an anonymous function
 			nodeListForEach(fields, function(current, index) {
 				if (percentages[index] !== -1) {
@@ -213,6 +214,16 @@ var uiController = (function () {
 					current.textContent = "--"
 				}
 			});
+
+		},
+
+		displayMonth: function() {
+			var now, year, month, months;
+			now = new Date();
+			months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+			year = now.getFullYear();
+			month = now.getMonth();
+			document.querySelector(domStrings.dateLabel).textContent = months[month] + ' de ' + year;
 
 		},
 
@@ -255,6 +266,18 @@ var uiController = (function () {
 
 		getDomStrings: function () {
 			return domStrings;
+		},
+
+		changedType: function() {
+			var fields = document.querySelectorAll(
+				domStrings.inputType + ', ' + domStrings.inputDescription + ', ' + domStrings.inputValue
+			);
+
+			nodeListForEach(fields, function(current){
+				current.classList.toggle('red-focus');
+			});
+
+			document.querySelector(domStrings.inputBtn).classList.toggle('red');
 		}
 	};
 
@@ -276,6 +299,8 @@ var controller = (function (budgetCtrl, uiCtrol) {
 		});
 
 		document.querySelector(dom.container).addEventListener('click', ctrlDeleteItem);
+
+		document.querySelector(dom.inputType).addEventListener('change', uiCtrol.changedType);
 	};
 
 	var updateBudget = function () {
@@ -350,6 +375,7 @@ var controller = (function (budgetCtrl, uiCtrol) {
 	return {
 		init: function () {
 			console.log("Application has started.");
+			uiCtrol.displayMonth();
 			setupEventListeners();
 		}
 	};
